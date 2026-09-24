@@ -22,7 +22,7 @@ export const TEMPLATES: CertificateTemplate[] = [
     fields: {
       recipientName: {
         x: 707, // centered
-        y: 462, // centered in the blank recipient area between "THIS CERTIFIES THAT" and "has demonstrated..."
+        y: 498, // 50% (498px) in the blank recipient area
         maxWidth: 960,
         defaultFontSize: 64,
         minFontSize: 30,
