@@ -37,8 +37,8 @@ export function App() {
     certificateId: TEMPLATES[0].defaultValues.certificateId || 'NA',
   });
 
-  // Date visibility toggle
-  const [includeDate, setIncludeDate] = useState(true);
+  // Date visibility toggle (unchecked by default)
+  const [includeDate, setIncludeDate] = useState(false);
 
   // Selected Font
   const defaultFont =

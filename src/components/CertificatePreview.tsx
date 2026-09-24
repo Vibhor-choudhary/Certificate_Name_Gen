@@ -1,8 +1,8 @@
-import { forwardRef, useState, useRef, useCallback, useImperativeHandle } from 'react';
+import { forwardRef, useState, useRef, useImperativeHandle } from 'react';
 import type { CertificateTemplate, CertificateValues, CertificateFont, AutoFitResult } from '../types/certificate';
 import { ModernGoldBackground } from '../templates/ModernGoldBackground';
 import { ClassicalAcademyBackground } from '../templates/ClassicalAcademyBackground';
-import { Maximize2, X, Move } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 
 interface CertificatePreviewProps {
   template: CertificateTemplate;
@@ -23,7 +23,7 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
       autoFitResult,
       namePosition,
       onPositionChange,
-      showDate = true,
+      showDate = false,
     },
     ref
   ) => {
@@ -42,21 +42,18 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
     const posX = namePosition?.x ?? nameField.x;
     const posY = namePosition?.y ?? nameField.y;
 
-    // Convert screen coordinates to SVG viewBox coordinates
-    const getSvgCoords = useCallback(
-      (clientX: number, clientY: number) => {
-        if (!svgInternalRef.current) return null;
-        const rect = svgInternalRef.current.getBoundingClientRect();
-        const scaleX = width / rect.width;
-        const scaleY = height / rect.height;
-        const x = Math.round((clientX - rect.left) * scaleX);
-        const y = Math.round((clientY - rect.top) * scaleY);
-        return { x, y };
-      },
-      [width, height]
-    );
+    // Convert screen coordinates to SVG viewBox coordinates for direct name drag
+    const getSvgCoords = (clientX: number, clientY: number) => {
+      if (!svgInternalRef.current) return null;
+      const rect = svgInternalRef.current.getBoundingClientRect();
+      const scaleX = width / rect.width;
+      const scaleY = height / rect.height;
+      const x = Math.round((clientX - rect.left) * scaleX);
+      const y = Math.round((clientY - rect.top) * scaleY);
+      return { x, y };
+    };
 
-    // Start dragging name
+    // Direct name dragging handlers
     const handlePointerDown = (e: React.PointerEvent) => {
       e.stopPropagation();
       (e.target as Element).setPointerCapture(e.pointerId);
@@ -67,7 +64,6 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
       if (!isDragging || !onPositionChange) return;
       const coords = getSvgCoords(e.clientX, e.clientY);
       if (coords) {
-        // Constrain within viewBox bounds
         const constrainedY = Math.max(100, Math.min(height - 100, coords.y));
         const constrainedX = Math.max(100, Math.min(width - 100, coords.x));
         onPositionChange({ x: constrainedX, y: constrainedY });
@@ -82,16 +78,6 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
         } catch {
           // ignore
         }
-      }
-    };
-
-    // Clicking anywhere on preview lets user tap to place name vertically
-    const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
-      if (isDragging || !onPositionChange) return;
-      const coords = getSvgCoords(e.clientX, e.clientY);
-      if (coords) {
-        const constrainedY = Math.max(150, Math.min(height - 150, coords.y));
-        onPositionChange({ x: posX, y: constrainedY });
       }
     };
 
@@ -122,26 +108,23 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
     };
 
     const recipientDisplayName = values.recipientName.trim() || 'Recipient Name';
-
-    // Filter out "NA" so it doesn't render unwanted text
     const shouldRender = (val?: string) => val && val.trim() !== '' && val.trim().toUpperCase() !== 'NA';
 
     return (
       <div className="relative group">
-        {/* Main Certificate Card with realistic print shadow */}
+        {/* Main Certificate Card with realistic print shadow - completely clean view */}
         <div className="relative w-full rounded-2xl overflow-hidden bg-white shadow-xl shadow-slate-200/70 border border-slate-200/80 transition-all duration-300">
           <svg
             ref={svgInternalRef}
-            onClick={handleSvgClick}
             viewBox={`0 0 ${width} ${height}`}
-            className="w-full h-auto block select-none cursor-pointer"
+            className="w-full h-auto block select-none"
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
           >
             {/* Background elements */}
             {renderBackground()}
 
-            {/* Visual Guideline when dragging */}
+            {/* Visual Guideline only while actively dragging */}
             {isDragging && (
               <g pointerEvents="none">
                 <line
@@ -152,13 +135,13 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
                   stroke="#d97706"
                   strokeWidth="2"
                   strokeDasharray="8 6"
-                  opacity="0.8"
+                  opacity="0.85"
                 />
-                <circle cx={posX} cy={posY} r="6" fill="#d97706" />
+                <circle cx={posX} cy={posY} r="5" fill="#d97706" />
               </g>
             )}
 
-            {/* DYNAMIC RECIPIENT NAME (Draggable) */}
+            {/* DYNAMIC RECIPIENT NAME (Draggable on text) */}
             <g
               transform={`translate(${posX}, ${posY})`}
               onPointerDown={handlePointerDown}
@@ -168,7 +151,7 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
               className="cursor-grab active:cursor-grabbing group/name"
               style={{ touchAction: 'none' }}
             >
-              {/* Invisible touch padding box for easy mobile dragging */}
+              {/* Invisible touch padding box */}
               <rect
                 x={-autoFitResult.fontSize * 5}
                 y={-autoFitResult.fontSize * 1.2}
@@ -177,19 +160,19 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
                 fill="transparent"
               />
 
-              {/* Hover / drag bounding box indicator */}
+              {/* Hover highlight bounding box */}
               <rect
                 x={-autoFitResult.fontSize * 3.5}
                 y={-autoFitResult.fontSize * 0.9}
                 width={autoFitResult.fontSize * 7}
                 height={autoFitResult.fontSize * 1.4}
-                fill="rgba(217, 119, 6, 0.08)"
+                fill="rgba(217, 119, 6, 0.05)"
                 stroke="#d97706"
-                strokeWidth="1.5"
+                strokeWidth="1.2"
                 strokeDasharray="5 3"
                 rx="6"
                 className={`transition-opacity duration-150 ${
-                  isDragging ? 'opacity-100' : 'opacity-0 group-hover/name:opacity-100'
+                  isDragging ? 'opacity-100' : 'opacity-0 hover:opacity-80'
                 }`}
               />
 
@@ -279,18 +262,9 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
             )}
           </svg>
 
-          {/* Floating Reposition Badge */}
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/80 text-white backdrop-blur-md text-[11px] font-medium flex items-center gap-1.5 shadow pointer-events-none">
-            <Move className="w-3 h-3 text-amber-400" />
-            <span>Drag name or tap to reposition</span>
-          </div>
-
           {/* Quick Zoom Trigger Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsZoomed(true);
-            }}
+            onClick={() => setIsZoomed(true)}
             aria-label="Enlarge Certificate Preview"
             className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 p-2 sm:p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white backdrop-blur-md shadow-lg transition-transform active:scale-95 flex items-center gap-1.5 text-xs font-medium cursor-pointer"
           >
