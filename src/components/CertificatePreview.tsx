@@ -151,31 +151,6 @@ export const CertificatePreview = forwardRef<SVGSVGElement, CertificatePreviewPr
               className="cursor-grab active:cursor-grabbing group/name"
               style={{ touchAction: 'none' }}
             >
-              {/* Invisible touch padding box */}
-              <rect
-                x={-autoFitResult.fontSize * 5}
-                y={-autoFitResult.fontSize * 1.2}
-                width={autoFitResult.fontSize * 10}
-                height={autoFitResult.fontSize * 2.2}
-                fill="transparent"
-              />
-
-              {/* Hover highlight bounding box */}
-              <rect
-                x={-autoFitResult.fontSize * 3.5}
-                y={-autoFitResult.fontSize * 0.9}
-                width={autoFitResult.fontSize * 7}
-                height={autoFitResult.fontSize * 1.4}
-                fill="rgba(217, 119, 6, 0.05)"
-                stroke="#d97706"
-                strokeWidth="1.2"
-                strokeDasharray="5 3"
-                rx="6"
-                className={`transition-opacity duration-150 ${
-                  isDragging ? 'opacity-100' : 'opacity-0 hover:opacity-80'
-                }`}
-              />
-
               <text
                 x="0"
                 y="0"

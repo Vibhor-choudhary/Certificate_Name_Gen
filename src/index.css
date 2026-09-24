@@ -64,12 +64,18 @@
   scrollbar-width: none;
 }
 
-/* Print simulation styles */
+/* Print layout styles */
 @media print {
-  body {
-    background: white;
+  @page {
+    size: A4 landscape;
+    margin: 0;
   }
-  .no-print {
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .no-print, header, nav, footer, button, .download-section, .picker-section {
     display: none !important;
   }
 }
